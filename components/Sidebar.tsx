@@ -7,13 +7,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { STEPS } from "@/lib/constants";
+import { Step } from "@/lib/markdown";
 
 interface SidebarProps {
   currentStep: number;
+  steps: Step[];
 }
 
-export default function Sidebar({ currentStep }: SidebarProps) {
+export default function Sidebar({ currentStep, steps }: SidebarProps) {
   const router = useRouter();
 
   const goToStep = (stepId: number) => {
@@ -27,7 +28,7 @@ export default function Sidebar({ currentStep }: SidebarProps) {
           步骤导航
         </h3>
         <nav className="space-y-1">
-          {STEPS.map((step) => {
+          {steps.map((step) => {
             const isCurrent = step.id === currentStep;
 
             return (

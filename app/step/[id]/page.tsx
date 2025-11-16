@@ -5,8 +5,7 @@
  */
 
 import { notFound } from "next/navigation";
-import { STEPS } from "@/lib/constants";
-import { getMarkdownContent } from "@/lib/markdown";
+import { getAllSteps, getMarkdownContent } from "@/lib/markdown";
 import StepContent from "./StepContent";
 
 interface StepPageProps {
@@ -17,6 +16,7 @@ interface StepPageProps {
 
 // 生成静态参数(用于静态生成)
 export async function generateStaticParams() {
+  const STEPS = getAllSteps();
   return STEPS.map((step) => ({
     id: step.id.toString(),
   }));
@@ -26,6 +26,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: StepPageProps) {
   const { id } = await params;
   const stepId = parseInt(id);
+  const STEPS = getAllSteps();
   const step = STEPS.find((s) => s.id === stepId);
 
   if (!step) {
@@ -43,6 +44,7 @@ export async function generateMetadata({ params }: StepPageProps) {
 export default async function StepPage({ params }: StepPageProps) {
   const { id } = await params;
   const stepId = parseInt(id);
+  const STEPS = getAllSteps();
 
   // 验证步骤 ID
   if (isNaN(stepId) || stepId < 1 || stepId > STEPS.length) {
@@ -78,6 +80,7 @@ export default async function StepPage({ params }: StepPageProps) {
       stepId={stepId}
       stepInfo={step}
       markdownData={markdownData}
+      allSteps={STEPS}
     />
   );
 }

@@ -8,13 +8,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { STEPS } from "@/lib/constants";
+import { Step } from "@/lib/markdown";
 
 interface MobileMenuProps {
   currentStep?: number;
+  steps: Step[];
 }
 
-export default function MobileMenu({ currentStep }: MobileMenuProps) {
+export default function MobileMenu({ currentStep, steps }: MobileMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
 
@@ -93,7 +94,7 @@ export default function MobileMenu({ currentStep }: MobileMenuProps) {
         {/* 菜单内容 */}
         <div className="overflow-y-auto p-4" style={{ maxHeight: "calc(80vh - 80px)" }}>
           <nav className="space-y-2">
-            {STEPS.map((step) => {
+            {steps.map((step) => {
               const isCurrent = step.id === currentStep;
 
               return (
