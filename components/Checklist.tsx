@@ -1,12 +1,13 @@
 /**
  * 交互式 Checklist 组件
  * 用途: 渲染可勾选的任务清单
- * 业务逻辑: 用户点击勾选框时,状态保存到 localStorage,带有动画效果
+ * 业务逻辑: 用户点击勾选框时,状态实时同步到 InstantDB 云端,带有动画效果
  */
 
 "use client";
 
-import { useStore } from "@/lib/store";
+import { useState } from "react";
+import { useChecklistSync } from "@/lib/useProgress";
 import { ChecklistItem } from "@/lib/markdown";
 
 interface ChecklistProps {
@@ -15,18 +16,26 @@ interface ChecklistProps {
 }
 
 export default function Checklist({ stepId, items }: ChecklistProps) {
-  const { checklist, toggleChecklistItem } = useStore();
+  const { checklist, toggleItem, isItemChecked } = useChecklistSync();
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // 获取当前步骤的 checklist 状态
   const stepChecklist = checklist[stepId] || {};
 
-  // 处理勾选框点击
-  const handleToggle = (itemId: string) => {
-    toggleChecklistItem(stepId, itemId);
+  // 处理勾选框点击（带云端同步）
+  const handleToggle = async (itemId: string) => {
+    setIsSyncing(true);
+    try {
+      await toggleItem(stepId, itemId);
+    } catch (error) {
+      console.error("同步失败:", error);
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   // 计算完成进度
-  const completedCount = items.filter((item) => stepChecklist[item.id]).length;
+  const completedCount = items.filter((item) => isItemChecked(stepId, item.id)).length;
   const totalCount = items.length;
   const percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
@@ -66,7 +75,7 @@ export default function Checklist({ stepId, items }: ChecklistProps) {
       {/* Checklist 项目列表 */}
       <div className="space-y-3">
         {items.map((item, index) => {
-          const isChecked = stepChecklist[item.id] || false;
+          const isChecked = isItemChecked(stepId, item.id);
 
           return (
             <div
@@ -75,17 +84,18 @@ export default function Checklist({ stepId, items }: ChecklistProps) {
                 isChecked
                   ? "bg-green-50 border border-green-200"
                   : "bg-gray-50 border border-gray-200 hover:bg-gray-100"
-              }`}
+              } ${isSyncing ? "opacity-70" : ""}`}
               style={{ animationDelay: `${index * 0.05}s` }}
             >
               {/* 自定义勾选框 */}
               <button
                 onClick={() => handleToggle(item.id)}
+                disabled={isSyncing}
                 className={`flex-shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center transition-all duration-200 ${
                   isChecked
                     ? "bg-green-500 border-green-500 checkbox-bounce"
                     : "bg-white border-gray-300 hover:border-blue-500"
-                }`}
+                } ${isSyncing ? "cursor-wait" : ""}`}
                 aria-label={isChecked ? "取消勾选" : "勾选完成"}
               >
                 {isChecked && (
@@ -111,7 +121,7 @@ export default function Checklist({ stepId, items }: ChecklistProps) {
                   isChecked
                     ? "text-gray-500 line-through"
                     : "text-gray-800"
-                }`}
+                } ${isSyncing ? "cursor-wait" : ""}`}
                 onClick={() => handleToggle(item.id)}
               >
                 {item.text}

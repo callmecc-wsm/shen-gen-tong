@@ -1,15 +1,17 @@
 # 项目文件结构说明
 
-本文档说明申根签证助手前端原型的文件组织结构。
+本文档说明申根签证助手全栈应用的文件组织结构。
 
 ## 技术栈
 
 - **框架**: Next.js 14 (App Router)
 - **语言**: TypeScript
 - **样式**: Tailwind CSS
-- **状态管理**: Zustand
+- **后端**: Next.js API Routes + InstantDB
+- **数据库**: InstantDB (实时数据库)
+- **认证**: JWT Token
 - **Markdown**: React Markdown + Gray Matter
-- **存储**: localStorage
+- **部署**: Vercel
 
 ---
 
@@ -19,27 +21,35 @@
 /
 ├── app/                        # Next.js App Router 页面
 │   ├── layout.tsx              # 根布局,定义全局 HTML 结构
-│   ├── page.tsx                # 首页:激活码验证页面
+│   ├── page.tsx                # 首页:激活码验证页面(已连接真实API)
 │   ├── globals.css             # 全局样式和自定义 CSS
+│   │
+│   ├── api/                    # ⭐ 后端 API 路由
+│   │   ├── activate/           # 激活码验证 API
+│   │   │   └── route.ts        # POST: 验证激活码,生成JWT Token
+│   │   ├── verify/             # Token验证 API
+│   │   │   └── route.ts        # POST: 验证JWT Token是否有效
+│   │   └── progress/           # 用户进度 API
+│   │       └── route.ts        # GET: 获取进度 | POST: 更新进度
 │   │
 │   ├── countries/              # 国家选择页面
 │   │   └── page.tsx            # 显示申根国家卡片
 │   │
 │   ├── overview/               # 步骤总览页面
-│   │   └── page.tsx            # 显示10步进度和快速导航
+│   │   └── page.tsx            # 显示10步进度(从云端加载)
 │   │
 │   ├── step/[id]/              # 动态步骤页面
 │   │   ├── page.tsx            # 服务端组件,读取 Markdown
-│   │   └── StepContent.tsx     # 客户端组件,处理交互
+│   │   └── StepContent.tsx     # 客户端组件,处理交互(云端同步)
 │   │
 │   ├── faq/                    # 常见问题页面
 │   │   └── page.tsx            # 展示 FAQ 内容
 │   │
 │   └── templates/              # 模板下载页面
-│       └── page.tsx            # 模板列表(演示版)
+│       └── page.tsx            # 模板列表
 │
 ├── components/                 # 可复用 React 组件
-│   ├── Checklist.tsx           # 交互式任务清单组件
+│   ├── Checklist.tsx           # ⭐ 交互式任务清单(实时同步到云端)
 │   ├── ProgressBar.tsx         # 顶部进度条
 │   ├── Navigation.tsx          # 底部导航按钮(上一步/下一步)
 │   ├── Sidebar.tsx             # PC端侧边栏目录
@@ -47,9 +57,16 @@
 │   └── MarkdownRenderer.tsx    # Markdown 内容渲染器
 │
 ├── lib/                        # 工具函数和配置
-│   ├── store.ts                # Zustand 全局状态管理
+│   ├── instantdb.ts            # ⭐ InstantDB 客户端配置
+│   ├── instantdb-admin.ts      # ⭐ InstantDB Admin 工具(后端使用)
+│   ├── useProgress.ts          # ⭐ 用户进度管理 Hook
+│   ├── jwt.ts                  # ⭐ JWT Token 工具函数
+│   ├── store.ts                # Zustand 状态管理(已弃用,保留兼容)
 │   ├── markdown.ts             # Markdown 文档读取和解析
 │   └── constants.ts            # 常量配置(步骤、国家等)
+│
+├── scripts/                    # ⭐ 管理脚本
+│   └── generate-codes.ts       # 激活码批量生成脚本
 │
 ├── docs/                       # Markdown 内容文档
 │   ├── PRD_主文档.md           # 产品需求文档
@@ -57,17 +74,25 @@
 │   ├── 02_主目的地判断.md      # 步骤2内容
 │   ├── ... (03-10)             # 其他步骤文档
 │   ├── 附录_常见问题FAQ.md     # FAQ内容
-│   └── 附录_材料模板说明.md    # 模板说明
+│   ├── 附录_材料模板说明.md    # 模板说明
+│   └── 项目文件结构说明.md     # 文件结构详解
 │
 ├── public/                     # 静态资源
 │
+├── .env.local                  # ⭐ 环境变量配置(不提交到Git)
+├── ENV_SETUP.md                # ⭐ 环境变量配置说明
+├── DEPLOYMENT_GUIDE.md         # ⭐ 部署完整指南
 ├── package.json                # 项目依赖和脚本
 ├── tsconfig.json               # TypeScript 配置
 ├── tailwind.config.ts          # Tailwind CSS 配置
 ├── next.config.js              # Next.js 配置
 ├── README.md                   # 项目说明
 ├── CHANGELOG.md                # 更新日志
-└── PROJECT_STRUCTURE.md        # 本文档
+├── PROJECT_STRUCTURE.md        # 本文档
+├── 使用说明.md                  # 使用指南
+└── 项目交付总结.md              # 项目交付总结
+
+⭐ = 全栈升级新增文件
 
 ```
 
@@ -77,10 +102,20 @@
 
 ### 页面组件 (app/)
 
-#### `app/page.tsx` - 激活码验证页面
+#### `app/page.tsx` - 激活码验证页面 ⭐已升级
 - **用途**: 系统入口,验证用户激活码
-- **业务逻辑**: 演示模式下,用户可直接点击"开始演示"跳过验证
-- **状态管理**: 激活状态存储到 localStorage
+- **业务逻辑**: 调用后端 API 验证激活码,生成 JWT Token
+- **状态管理**: Token 存储到 localStorage,支持自动登录
+- **特性**: 已移除演示模式,连接真实 API
+
+#### `app/api/` - 后端 API 路由 ⭐新增
+- **用途**: 提供后端服务接口
+- **技术**: Next.js API Routes + InstantDB Admin SDK
+- **接口列表**:
+  - `POST /api/activate`: 激活码验证
+  - `POST /api/verify`: Token 验证
+  - `GET /api/progress`: 获取用户进度
+  - `POST /api/progress`: 更新用户进度
 
 #### `app/countries/page.tsx` - 国家选择页面
 - **用途**: 展示申根国家列表
