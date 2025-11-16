@@ -1,0 +1,231 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 全局样式定义 */
+
+/* 自定义滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
+}
+
+/* 基础排版优化 */
+body {
+  @apply text-gray-800;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* 链接样式 */
+a {
+  @apply text-blue-600 hover:text-blue-700 transition-colors;
+}
+
+/* 按钮基础样式 */
+.btn {
+  @apply px-6 py-3 rounded-lg font-medium transition-all duration-200;
+  @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+}
+
+.btn-primary {
+  @apply bg-blue-600 text-white hover:bg-blue-700;
+  @apply focus:ring-blue-500;
+}
+
+.btn-secondary {
+  @apply bg-gray-200 text-gray-800 hover:bg-gray-300;
+  @apply focus:ring-gray-400;
+}
+
+.btn-success {
+  @apply bg-green-600 text-white hover:bg-green-700;
+  @apply focus:ring-green-500;
+}
+
+/* 卡片样式 */
+.card {
+  @apply bg-white rounded-xl shadow-sm border border-gray-200;
+  @apply transition-shadow duration-200 hover:shadow-md;
+}
+
+/* 信息提示框样式 - 对应 PRD 中的4种提示层级 */
+
+/* 🔴 严重错误/强制要求 */
+.alert-error {
+  @apply bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg;
+}
+
+.alert-error-title {
+  @apply text-red-800 font-semibold flex items-center gap-2;
+}
+
+.alert-error-content {
+  @apply text-red-700 mt-1;
+}
+
+/* ⚠️ 重要提示/常见错误 */
+.alert-warning {
+  @apply bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg;
+}
+
+.alert-warning-title {
+  @apply text-yellow-800 font-semibold flex items-center gap-2;
+}
+
+.alert-warning-content {
+  @apply text-yellow-700 mt-1;
+}
+
+/* 💡 贴心提示/优化建议 */
+.alert-info {
+  @apply bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg;
+}
+
+.alert-info-title {
+  @apply text-blue-800 font-semibold flex items-center gap-2;
+}
+
+.alert-info-content {
+  @apply text-blue-700 mt-1;
+}
+
+/* 💚 情绪缓解/鼓励话术 */
+.alert-success {
+  @apply bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg;
+}
+
+.alert-success-title {
+  @apply text-green-800 font-semibold flex items-center gap-2;
+}
+
+.alert-success-content {
+  @apply text-green-700 mt-1;
+}
+
+/* Markdown 内容样式 */
+.markdown-content {
+  @apply max-w-none;
+}
+
+.markdown-content h1 {
+  @apply text-3xl font-bold text-gray-900 mt-8 mb-4;
+}
+
+.markdown-content h2 {
+  @apply text-2xl font-bold text-gray-800 mt-6 mb-3 pb-2 border-b border-gray-200;
+}
+
+.markdown-content h3 {
+  @apply text-xl font-semibold text-gray-800 mt-4 mb-2;
+}
+
+.markdown-content h4 {
+  @apply text-lg font-semibold text-gray-700 mt-3 mb-2;
+}
+
+.markdown-content p {
+  @apply text-gray-700 leading-relaxed my-3;
+}
+
+.markdown-content ul {
+  @apply list-disc list-inside my-3 space-y-1;
+}
+
+.markdown-content ol {
+  @apply list-decimal list-inside my-3 space-y-1;
+}
+
+.markdown-content li {
+  @apply text-gray-700;
+}
+
+.markdown-content strong {
+  @apply font-semibold text-gray-900;
+}
+
+.markdown-content em {
+  @apply italic text-gray-600;
+}
+
+.markdown-content code {
+  @apply bg-gray-100 px-2 py-1 rounded text-sm font-mono text-pink-600;
+}
+
+.markdown-content pre {
+  @apply bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto my-4;
+}
+
+.markdown-content blockquote {
+  @apply border-l-4 border-gray-300 pl-4 italic text-gray-600 my-4;
+}
+
+.markdown-content table {
+  @apply w-full border-collapse my-4;
+}
+
+.markdown-content th {
+  @apply bg-gray-100 border border-gray-300 px-4 py-2 text-left font-semibold text-gray-800;
+}
+
+.markdown-content td {
+  @apply border border-gray-300 px-4 py-2 text-gray-700;
+}
+
+.markdown-content a {
+  @apply text-blue-600 hover:text-blue-700 underline;
+}
+
+/* 加载动画 */
+.spinner {
+  @apply inline-block w-8 h-8 border-4 border-gray-200 border-t-blue-600 rounded-full;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 淡入动画 */
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 复选框动画 */
+.checkbox-bounce {
+  animation: bounce 0.3s ease-in-out;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
