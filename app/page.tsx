@@ -83,6 +83,9 @@ export default function HomePage() {
         // 激活成功,保存 Token
         localStorage.setItem(TOKEN_KEY, data.token);
         
+        // 更新状态管理器中的激活状态
+        localStorage.setItem("visa_helper_activated", "true");
+        
         // 跳转到国家选择页
         router.push("/countries");
       } else {
@@ -198,6 +201,17 @@ export default function HomePage() {
               💡 <strong>提示：</strong>激活码一经使用，您可以在任何设备上使用同一个激活码登录，进度会自动同步。
             </p>
           </div>
+
+          {/* 演示模式入口 */}
+          <div className="mt-4 text-center">
+            <button
+              type="button"
+              onClick={() => router.push("/demo")}
+              className="text-sm text-blue-600 hover:text-blue-800 underline"
+            >
+              🚀 开发测试：进入演示模式
+            </button>
+          </div>
         </div>
 
         {/* 底部信息 */}
@@ -208,16 +222,5 @@ export default function HomePage() {
       </div>
     </div>
   );
-}
-
-// 导出 Token 管理工具函数（供其他页面使用）
-export function getAuthToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(TOKEN_KEY);
-}
-
-export function clearAuthToken(): void {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem(TOKEN_KEY);
 }
 

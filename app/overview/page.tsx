@@ -6,15 +6,25 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useProgress } from "@/lib/useProgress";
-import { STEPS } from "@/lib/constants";
-import { getAuthToken } from "@/app/page";
+import { getAuthToken } from "@/lib/auth";
+
+interface Step {
+  id: number;
+  title: string;
+  file: string;
+  path: string;
+  estimatedTime?: string;
+  importance?: number;
+}
 
 export default function OverviewPage() {
   const router = useRouter();
   const { progress, isLoading, error } = useProgress();
+  const [steps, setSteps] = useState<Step[]>([]);
+  const [stepsLoading, setStepsLoading] = useState(true);
 
   // 检查登录状态
   useEffect(() => {
@@ -23,6 +33,28 @@ export default function OverviewPage() {
       router.push("/");
     }
   }, [router]);
+
+  // 加载步骤数据
+  useEffect(() => {
+    const loadSteps = async () => {
+      try {
+        const response = await fetch("/api/steps");
+        const data = await response.json();
+        
+        if (data.success) {
+          setSteps(data.steps);
+        } else {
+          console.error("获取步骤数据失败:", data.error);
+        }
+        setStepsLoading(false);
+      } catch (error) {
+        console.error("加载步骤数据失败:", error);
+        setStepsLoading(false);
+      }
+    };
+    
+    loadSteps();
+  }, []);
 
   // 计算总体进度
   const calculateTotalProgress = () => {
@@ -65,7 +97,7 @@ export default function OverviewPage() {
     router.push(`/step/${stepId}`);
   };
 
-  if (isLoading) {
+  if (isLoading || stepsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50">
         <div className="text-center">
@@ -135,7 +167,7 @@ export default function OverviewPage() {
 
         {/* 步骤列表 */}
         <div className="space-y-4">
-          {STEPS.map((step, index) => {
+          {steps.map((step, index) => {
             const stepProgress = getStepProgress(`step${step.id}`);
             const stepPercentage = stepProgress.total > 0
               ? Math.round((stepProgress.completed / stepProgress.total) * 100)
@@ -169,7 +201,7 @@ export default function OverviewPage() {
                         <div className="flex items-center gap-4 text-sm text-gray-600">
                           <span>⏱️ {step.estimatedTime}</span>
                           <span>
-                            {"⭐".repeat(step.importance)}
+                            {"⭐".repeat(step.importance || 0)}
                           </span>
                         </div>
                       </div>

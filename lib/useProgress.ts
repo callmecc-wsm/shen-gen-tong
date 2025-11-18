@@ -9,7 +9,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@/lib/instantdb";
 import type { ChecklistData } from "@/lib/instantdb";
-import { getAuthToken } from "@/app/page";
+import { getAuthToken } from "@/lib/auth";
 
 interface ProgressData {
   currentStep: number;
@@ -80,11 +80,13 @@ export function useProgress(code?: string): UseProgressReturn {
       ? {
           userProgress: {
             $: {
-              where: { code: activationCode },
+              where: {
+                code: activationCode,
+              },
             },
           },
         }
-      : undefined
+      : null
   );
 
   // 处理查询结果

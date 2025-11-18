@@ -138,6 +138,8 @@ export interface Step {
   title: string;
   file: string;
   path: string;
+  estimatedTime?: string;
+  importance?: number;
 }
 
 /**
@@ -166,12 +168,16 @@ export function getAllSteps(): Step[] {
         // 从 frontmatter 读取 id 和 title
         const id = data.id || parseInt(file.match(/^(\d+)_/)?.[1] || "0");
         const title = data.title || file.replace(/^\d+_/, "").replace(/\.md$/, "");
+        const estimatedTime = data.estimatedTime || "15分钟";
+        const importance = data.importance || 3;
 
         steps.push({
           id,
           title,
           file,
           path: `/step/${id}`,
+          estimatedTime,
+          importance,
         });
       } catch (error) {
         console.error(`Error reading step file ${file}:`, error);

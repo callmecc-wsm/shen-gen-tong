@@ -130,6 +130,18 @@ export const useStore = create<AppState>((set, get) => ({
     const currentStep = loadFromStorage(STORAGE_KEYS.CURRENT_STEP, 1);
     const checklist = loadFromStorage(STORAGE_KEYS.CHECKLIST, {});
 
+    console.log("初始化状态从localStorage:", { isActivated, currentStep, checklist });
+    
+    // 如果没有激活状态但存在token，也认为是激活状态
+    if (!isActivated && typeof window !== "undefined") {
+      const token = localStorage.getItem("visa_helper_token");
+      if (token) {
+        console.log("发现token，设置为激活状态");
+        set({ isActivated: true, currentStep, checklist });
+        return;
+      }
+    }
+
     set({ isActivated, currentStep, checklist });
   },
 
