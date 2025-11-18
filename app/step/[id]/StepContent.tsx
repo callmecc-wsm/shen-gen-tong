@@ -22,12 +22,14 @@ interface StepContentProps {
   stepId: number;
   stepInfo: typeof STEPS[number];
   markdownData: MarkdownDoc;
+  allSteps: typeof STEPS;
 }
 
 export default function StepContent({
   stepId,
   stepInfo,
   markdownData,
+  allSteps,
 }: StepContentProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
@@ -61,7 +63,7 @@ export default function StepContent({
       {/* 主内容区 */}
       <div className="flex">
         {/* 侧边栏 (仅 PC 端显示) */}
-        <Sidebar currentStep={stepId} />
+        <Sidebar currentStep={stepId} steps={allSteps} />
 
         {/* 中心内容区 */}
         <div className="flex-1 lg:ml-72 pb-24">
@@ -122,7 +124,7 @@ export default function StepContent({
       <Navigation currentStep={stepId} totalSteps={STEPS.length} />
 
       {/* 移动端菜单 */}
-      <MobileMenu currentStep={stepId} />
+      <MobileMenu currentStep={stepId} steps={allSteps} />
     </div>
   );
 }
