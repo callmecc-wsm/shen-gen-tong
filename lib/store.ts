@@ -16,10 +16,6 @@ export type ChecklistState = {
 };
 
 interface AppState {
-  // 激活状态
-  isActivated: boolean;
-  setActivated: (value: boolean) => void;
-
   // 当前步骤
   currentStep: number;
   setCurrentStep: (step: number) => void;
@@ -63,15 +59,8 @@ const saveToStorage = (key: string, value: any) => {
 
 export const useStore = create<AppState>((set, get) => ({
   // 默认状态
-  isActivated: false,
   currentStep: 1,
   checklist: {},
-
-  // 设置激活状态
-  setActivated: (value: boolean) => {
-    set({ isActivated: value });
-    saveToStorage(STORAGE_KEYS.ACTIVATED, value);
-  },
 
   // 设置当前步骤
   setCurrentStep: (step: number) => {
@@ -126,21 +115,19 @@ export const useStore = create<AppState>((set, get) => ({
 
   // 从 localStorage 初始化状态
   initializeFromStorage: () => {
-    const isActivated = loadFromStorage(STORAGE_KEYS.ACTIVATED, false);
     const currentStep = loadFromStorage(STORAGE_KEYS.CURRENT_STEP, 1);
     const checklist = loadFromStorage(STORAGE_KEYS.CHECKLIST, {});
 
-    set({ isActivated, currentStep, checklist });
+    set({ currentStep, checklist });
   },
 
   // 清除所有数据
   clearAllData: () => {
     if (typeof window !== "undefined") {
-      localStorage.removeItem(STORAGE_KEYS.ACTIVATED);
       localStorage.removeItem(STORAGE_KEYS.CURRENT_STEP);
       localStorage.removeItem(STORAGE_KEYS.CHECKLIST);
     }
-    set({ isActivated: false, currentStep: 1, checklist: {} });
+    set({ currentStep: 1, checklist: {} });
   },
 }));
 

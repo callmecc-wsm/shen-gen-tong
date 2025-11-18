@@ -149,7 +149,7 @@ export default function OverviewPage() {
                 style={{ animationDelay: `${index * 0.05}s` }}
                 onClick={() => goToStep(step.id)}
               >
-                <div className="flex items-start gap-4">
+                <div className="flex items-center gap-4">
                   {/* 步骤编号 */}
                   <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold ${
                     isCompleted
@@ -163,15 +163,14 @@ export default function OverviewPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4 mb-2">
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                        <h3 className="text-lg font-semibold text-gray-900">
                           步骤 {step.id}: {step.title}
                         </h3>
-                        <div className="flex items-center gap-4 text-sm text-gray-600">
-                          <span>⏱️ {step.estimatedTime}</span>
-                          <span>
-                            {"⭐".repeat(step.importance)}
-                          </span>
-                        </div>
+                        {step.description && (
+                          <p className="text-sm text-gray-500 mt-1">
+                            {step.description}
+                          </p>
+                        )}
                       </div>
                       
                       {/* 完成状态 */}

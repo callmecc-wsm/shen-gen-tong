@@ -136,6 +136,7 @@ export function getAllStepFiles(): string[] {
 export interface Step {
   id: number;
   title: string;
+  description?: string; // 步骤简短描述（显示在卡片副标题）
   file: string;
   path: string;
 }
@@ -163,13 +164,15 @@ export function getAllSteps(): Step[] {
         const fileContents = fs.readFileSync(filePath, "utf8");
         const { data } = matter(fileContents);
 
-        // 从 frontmatter 读取 id 和 title
+        // 从 frontmatter 读取 id、title 和 description
         const id = data.id || parseInt(file.match(/^(\d+)_/)?.[1] || "0");
         const title = data.title || file.replace(/^\d+_/, "").replace(/\.md$/, "");
+        const description = data.description || ""; // 读取步骤描述
 
         steps.push({
           id,
           title,
+          description,
           file,
           path: `/step/${id}`,
         });

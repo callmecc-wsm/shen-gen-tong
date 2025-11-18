@@ -102,7 +102,7 @@ export default function OverviewClient({ steps }: OverviewClientProps) {
                 style={{ animationDelay: `${index * 0.05}s` }}
                 onClick={() => goToStep(step.id)}
               >
-                <div className="flex items-start gap-4">
+                <div className="flex items-center gap-4">
                   {/* 步骤编号 */}
                   <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold ${
                     isCompleted
@@ -119,6 +119,11 @@ export default function OverviewClient({ steps }: OverviewClientProps) {
                         <h3 className="text-lg font-semibold text-gray-900">
                           步骤 {step.id}: {step.title}
                         </h3>
+                        {step.description && (
+                          <p className="text-sm text-gray-500 mt-1">
+                            {step.description}
+                          </p>
+                        )}
                       </div>
                       
                       {/* 完成状态 */}

@@ -8,23 +8,19 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useStore } from "@/lib/store";
 import { COUNTRIES } from "@/lib/constants";
+import { getAuthToken } from "@/app/page";
 
 export default function CountriesPage() {
   const router = useRouter();
-  const { isActivated, initializeFromStorage } = useStore();
 
-  // 检查激活状态
+  // 检查登录状态（使用 JWT Token）
   useEffect(() => {
-    initializeFromStorage();
-  }, [initializeFromStorage]);
-
-  useEffect(() => {
-    if (!isActivated) {
+    const token = getAuthToken();
+    if (!token) {
       router.push("/");
     }
-  }, [isActivated, router]);
+  }, [router]);
 
   // 处理国家选择
   const handleCountrySelect = (countryId: string) => {
@@ -32,14 +28,6 @@ export default function CountriesPage() {
       router.push("/overview");
     }
   };
-
-  if (!isActivated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="spinner"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-12 px-4">
