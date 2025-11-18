@@ -8,8 +8,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getAuthToken } from "@/app/page";
-import { STEPS } from "@/lib/constants";
+import { getAuthToken } from "@/lib/auth";
 import { MarkdownDoc } from "@/lib/markdown";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import Checklist from "@/components/Checklist";
@@ -20,9 +19,9 @@ import MobileMenu from "@/components/MobileMenu";
 
 interface StepContentProps {
   stepId: number;
-  stepInfo: typeof STEPS[number];
+  stepInfo: any;
   markdownData: MarkdownDoc;
-  allSteps: typeof STEPS;
+  allSteps: any[];
 }
 
 export default function StepContent({
@@ -58,7 +57,7 @@ export default function StepContent({
   return (
     <div className="min-h-screen bg-gray-50">
       {/* 顶部进度条 */}
-      <ProgressBar currentStep={stepId} totalSteps={STEPS.length} />
+      <ProgressBar currentStep={stepId} totalSteps={allSteps.length} />
 
       {/* 主内容区 */}
       <div className="flex">
@@ -121,7 +120,7 @@ export default function StepContent({
       </div>
 
       {/* 底部导航栏 */}
-      <Navigation currentStep={stepId} totalSteps={STEPS.length} />
+      <Navigation currentStep={stepId} totalSteps={allSteps.length} />
 
       {/* 移动端菜单 */}
       <MobileMenu currentStep={stepId} steps={allSteps} />

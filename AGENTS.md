@@ -1,211 +1,178 @@
-# 申根签证准备助手 - 架构概述
+# 申根签证助手 - 架构概述
 
-## 项目概述
+## 1. 项目概述
 
-申根签证准备助手是一个基于Next.js 14的全栈Web应用，专注于为用户提供交互式的申根签证准备指导。项目采用现代化的技术栈，结合实时数据库和JWT认证，为用户提供个性化的签证准备体验。
+申根签证助手是一个基于Next.js的交互式签证准备指导平台，专注于帮助用户高质量完成意大利申根签证申请流程。项目采用现代化的全栈架构，提供详细的步骤指导和交互式Checklist功能。
 
 **核心架构特点：**
-- 前后端一体化：Next.js App Router + API Routes
-- 实时数据同步：InstantDB实时数据库
-- 状态管理：Zustand + localStorage双模式
-- 内容管理：Markdown文档驱动
-- 响应式设计：移动优先的Tailwind CSS
+- Next.js 14 App Router架构
+- TypeScript全栈开发
+- 客户端状态管理与云端同步
+- Markdown内容渲染
+- 响应式设计支持多端访问
 
-## 技术栈
+## 2. 技术栈
 
-### 核心技术
-- **框架**: Next.js 14 (App Router)
-- **语言**: TypeScript
-- **样式**: Tailwind CSS
-- **数据库**: InstantDB (实时数据库)
-- **认证**: JWT Token
-- **状态管理**: Zustand + localStorage
-- **内容渲染**: React Markdown + Gray Matter
+**前端框架：**
+- Next.js 14 (App Router)
+- React 18
+- TypeScript 5.4+
+- Tailwind CSS 3.4+
 
-### 开发工具
-- **包管理**: npm
-- **代码检查**: ESLint + Next.js配置
-- **类型检查**: TypeScript
-- **部署平台**: Vercel
+**状态管理：**
+- Zustand (客户端状态)
+- localStorage (本地持久化)
 
-## 项目结构
+**内容渲染：**
+- React Markdown
+- Gray Matter (Markdown元数据解析)
+- remark-gfm (GitHub风格Markdown)
+
+**开发工具：**
+- ESLint (代码检查)
+- TypeScript (类型检查)
+- PostCSS + Autoprefixer (CSS处理)
+
+## 3. 项目结构
 
 ```
-app/                    # Next.js App Router页面
-├── api/               # 后端API路由
-│   ├── activate/      # 激活码验证
-│   ├── verify/        # Token验证
-│   └── progress/      # 用户进度管理
-├── step/[id]/         # 动态步骤页面
-├── countries/         # 国家选择
-├── overview/          # 步骤总览
-└── ...
-
-components/            # React组件
-├── Checklist.tsx     # 交互式任务清单
-├── ProgressBar.tsx   # 进度条
-├── Navigation.tsx    # 导航组件
-└── ...
-
-lib/                  # 工具函数和配置
-├── instantdb.ts      # 数据库客户端
-├── jwt.ts           # JWT工具
-├── markdown.ts      # Markdown处理
-├── constants.ts     # 常量配置
-└── ...
-
-docs/                # Markdown内容文档
-scripts/             # 管理脚本
+/
+├── app/                    # Next.js App Router页面
+│   ├── api/               # API路由
+│   │   ├── activate/      # 激活码验证
+│   │   ├── verify/        # Token验证
+│   │   └── progress/      # 用户进度管理
+│   ├── countries/         # 国家选择页面
+│   ├── overview/          # 步骤总览页面
+│   ├── step/[id]/         # 动态步骤页面
+│   ├── faq/               # FAQ页面
+│   └── templates/         # 模板页面
+├── components/            # React组件
+│   ├── Checklist.tsx      # 任务清单组件
+│   ├── ProgressBar.tsx    # 进度条组件
+│   └── Navigation.tsx     # 导航组件
+├── lib/                   # 工具库
+│   ├── store.ts          # 状态管理
+│   ├── markdown.ts       # Markdown解析
+│   └── constants.ts      # 常量配置
+├── docs/                  # Markdown内容文档
+└── public/               # 静态资源
 ```
 
-## 核心功能模块
-
-### 1. 用户认证系统
-- **激活码验证**: 基于JWT的激活码验证机制
-- **Token管理**: 本地存储 + 自动续期
-- **权限控制**: 步骤访问权限验证
-
-### 2. 进度管理系统
-- **实时同步**: 用户进度实时保存到云端
-- **本地缓存**: localStorage双重保障
-- **状态恢复**: 页面刷新后自动恢复进度
-
-### 3. 内容管理系统
-- **Markdown驱动**: 所有步骤内容为Markdown格式
-- **动态渲染**: 服务端读取，客户端渲染
-- **Checklist集成**: 自动提取任务清单项
-
-### 4. 响应式UI系统
-- **移动优先**: 适配手机、平板、PC
-- **组件化**: 可复用的React组件
-- **动画效果**: 流畅的过渡和交互动画
-
-## 开发命令
+## 4. 开发命令
 
 ```bash
 # 安装依赖
 npm install
 
 # 本地开发
-npm run dev
+npm run dev        # 启动开发服务器 (http://localhost:3000)
 
-# 构建生产版本
-npm run build
-
-# 启动生产服务器
-npm start
-
-# 代码检查
-npm run lint
+# 构建和部署
+npm run build      # 构建生产版本
+npm start          # 启动生产服务器
+npm run lint       # 运行ESLint检查
 ```
 
-## 环境配置
+## 5. 代码规范
 
-### 必需环境变量
-```env
-# InstantDB配置
-NEXT_PUBLIC_INSTANTDB_APP_ID=your_app_id
-INSTANTDB_ADMIN_TOKEN=your_admin_token
+**TypeScript配置：**
+- 启用严格模式 (`strict: true`)
+- 使用ES2017目标
+- 模块解析采用bundler模式
+- 支持路径别名 (`@/*`)
 
-# JWT配置
-JWT_SECRET=your_jwt_secret_key
-```
+**ESLint规则：**
+- 继承Next.js核心规则 (`next/core-web-vitals`)
+- 自动检查React和Next.js最佳实践
 
-### 配置说明
-- **INSTANTDB_APP_ID**: InstantDB应用ID，前端可见
-- **INSTANTDB_ADMIN_TOKEN**: 管理员Token，仅后端使用
-- **JWT_SECRET**: JWT签名密钥，生产环境需使用强随机密钥
+**Tailwind CSS配置：**
+- 自定义primary颜色系统
+- 支持响应式设计
+- 内容路径包含pages、components、app目录
 
-## 代码规范
+## 6. 核心功能模块
 
-### TypeScript规范
-- 严格模式启用 (`strict: true`)
-- 使用类型推断，避免显式any
-- 接口定义清晰，避免过度嵌套
+**激活验证模块：**
+- 演示模式支持直接跳过验证
+- 激活状态本地持久化存储
 
-### 组件规范
-- 优先使用服务端组件 (Server Components)
-- 客户端组件明确标记 "use client"
-- 组件职责单一，避免过度复杂
+**步骤导航系统：**
+- 10步详细签证申请流程
+- 动态路由渲染不同步骤内容
+- 服务端组件读取Markdown内容
 
-### 命名规范
-- 文件命名: 小写字母 + 连字符 (kebab-case)
-- 组件命名: PascalCase
-- 函数命名: camelCase
-- 常量命名: UPPER_SNAKE_CASE
+**交互式Checklist：**
+- 每个步骤的任务清单
+- 点击勾选状态自动保存
+- 实时进度统计和显示
 
-## 安全考虑
+**响应式布局：**
+- 移动优先设计策略
+- PC端侧边栏快速导航
+- 移动端抽屉式菜单
 
-### 数据安全
-- JWT Token本地存储，不包含敏感信息
-- 激活码验证后端处理，避免前端绕过
-- 用户数据云端加密存储
+## 7. 状态管理
 
-### 环境安全
-- 敏感环境变量绝不提交到Git
-- Admin Token仅用于后端API调用
-- 生产环境使用强随机JWT密钥
+**客户端状态 (Zustand)：**
+- 用户激活状态
+- 步骤完成进度
+- UI状态管理
 
-### 内容安全
-- Markdown内容服务端渲染，避免XSS
-- 用户输入验证和清理
-- 静态资源安全策略
+**本地存储：**
+- 激活状态持久化
+- Checklist完成状态
+- 用户偏好设置
 
-## 性能优化
+## 8. 内容管理
 
-### 构建优化
-- Next.js静态生成 (SSG) 优化
-- 代码分割和懒加载
-- 图片优化和压缩
+**Markdown文档：**
+- 步骤说明文档存储在docs目录
+- 支持YAML前置元数据
+- GitHub风格Markdown扩展
 
-### 运行时优化
-- 组件懒加载和代码分割
-- 状态管理优化，避免不必要的重渲染
-- localStorage读写优化
+**内容渲染：**
+- 服务端组件负责内容获取
+- 客户端组件处理交互逻辑
+- 自适应样式和动画效果
 
-## 部署指南
+## 9. 部署配置
 
-### Vercel部署
-1. 连接GitHub仓库
-2. 配置环境变量
-3. 自动构建和部署
-4. 自定义域名配置
+**Next.js配置：**
+- 启用React严格模式
+- 标准Next.js配置
+- 支持Vercel部署
 
-### 环境要求
+**环境要求：**
 - Node.js 18+
-- 支持Next.js的运行环境
-- InstantDB服务可用
+- npm包管理器
+- 现代浏览器支持
 
-## 故障排查
+## 10. 开发注意事项
 
-### 常见问题
-1. **激活码验证失败**: 检查JWT密钥和激活码生成
-2. **进度同步失败**: 检查InstantDB连接和Token
-3. **Markdown渲染异常**: 检查文件路径和格式
+**组件设计：**
+- 服务端组件用于数据获取和静态内容
+- 客户端组件用于交互和状态管理
+- 合理使用"use client"指令
 
-### 调试工具
-- 浏览器开发者工具
-- InstantDB Dashboard
-- Vercel部署日志
+**性能优化：**
+- 利用Next.js内置优化
+- 合理使用缓存策略
+- 避免不必要的客户端状态
 
-## 扩展开发
+**错误处理：**
+- API路由需要适当的错误处理
+- 客户端状态变更需要异常捕获
+- 提供用户友好的错误提示
 
-### 添加新步骤
-1. 在`docs/`目录添加Markdown文件
-2. 更新步骤配置常量
-3. 系统自动生成对应页面
+## 11. 扩展性考虑
 
-### 添加新国家
-1. 更新`COUNTRIES`常量配置
-2. 添加对应领区和领事馆信息
-3. 更新国家选择页面
+**多国家支持：**
+- 国家选择页面已预留扩展接口
+- 内容文档可按国家分类组织
+- 路由结构支持多国家扩展
 
-### 自定义样式
-1. 修改`tailwind.config.ts`主题配置
-2. 更新`app/globals.css`自定义样式
-3. 保持响应式设计原则
-
----
-
-**最后更新**: 2025年11月
-**维护团队**: 申根签证助手开发团队
+**用户系统：**
+- 激活码验证机制可扩展为用户登录
+- 进度同步可接入后端服务
+- 本地存储可迁移到云端同步

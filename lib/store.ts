@@ -16,6 +16,11 @@ export type ChecklistState = {
 };
 
 interface AppState {
+  // 激活状态
+  isActivated: boolean;
+  // 设置激活状态
+  setActivated: (value: boolean) => void;
+
   // 当前步骤
   currentStep: number;
   setCurrentStep: (step: number) => void;
@@ -59,8 +64,15 @@ const saveToStorage = (key: string, value: any) => {
 
 export const useStore = create<AppState>((set, get) => ({
   // 默认状态
+  isActivated: false,
   currentStep: 1,
   checklist: {},
+
+  // 设置激活状态
+  setActivated: (value: boolean) => {
+    set({ isActivated: value });
+    saveToStorage("visa_helper_activated", value);
+  },
 
   // 设置当前步骤
   setCurrentStep: (step: number) => {
@@ -115,19 +127,33 @@ export const useStore = create<AppState>((set, get) => ({
 
   // 从 localStorage 初始化状态
   initializeFromStorage: () => {
+    const isActivated = loadFromStorage("visa_helper_activated", false);
     const currentStep = loadFromStorage(STORAGE_KEYS.CURRENT_STEP, 1);
     const checklist = loadFromStorage(STORAGE_KEYS.CHECKLIST, {});
 
-    set({ currentStep, checklist });
+    console.log("初始化状态从localStorage:", { isActivated, currentStep, checklist });
+    
+    // 如果没有激活状态但存在token，也认为是激活状态
+    if (!isActivated && typeof window !== "undefined") {
+      const token = localStorage.getItem("visa_helper_token");
+      if (token) {
+        console.log("发现token，设置为激活状态");
+        set({ isActivated: true, currentStep, checklist });
+        return;
+      }
+    }
+
+    set({ isActivated, currentStep, checklist });
   },
 
   // 清除所有数据
   clearAllData: () => {
     if (typeof window !== "undefined") {
+      localStorage.removeItem("visa_helper_activated");
       localStorage.removeItem(STORAGE_KEYS.CURRENT_STEP);
       localStorage.removeItem(STORAGE_KEYS.CHECKLIST);
     }
-    set({ currentStep: 1, checklist: {} });
+    set({ isActivated: false, currentStep: 1, checklist: {} });
   },
 }));
 

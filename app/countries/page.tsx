@@ -6,21 +6,41 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useStore } from "@/lib/store";
 import { COUNTRIES } from "@/lib/constants";
-import { getAuthToken } from "@/app/page";
 
 export default function CountriesPage() {
   const router = useRouter();
+  const { isActivated, initializeFromStorage } = useStore();
+  const [isChecking, setIsChecking] = useState(true);
 
-  // 检查登录状态（使用 JWT Token）
+  // 检查激活状态 - 使用本地存储直接检查
   useEffect(() => {
-    const token = getAuthToken();
-    if (!token) {
+    const checkActivation = () => {
+      const token = localStorage.getItem("visa_helper_token");
+      const activated = localStorage.getItem("visa_helper_activated");
+      
+      console.log("检查激活状态:", { token, activated });
+      
+      if (token && activated === "true") {
+        // 如果有token且已激活，更新状态管理器
+        initializeFromStorage();
+      }
+      
+      setIsChecking(false);
+    };
+    
+    checkActivation();
+  }, [initializeFromStorage]);
+
+  useEffect(() => {
+    if (!isChecking && !isActivated) {
+      console.log("未激活，重定向到首页");
       router.push("/");
     }
-  }, [router]);
+  }, [isActivated, isChecking, router]);
 
   // 处理国家选择
   const handleCountrySelect = (countryId: string) => {
@@ -28,6 +48,17 @@ export default function CountriesPage() {
       router.push("/overview");
     }
   };
+
+  if (isChecking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <p className="mt-4 text-gray-600">正在检查登录状态...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-12 px-4">
