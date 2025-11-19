@@ -129,20 +129,8 @@ export default function CountriesPage() {
           })}
         </div>
 
-        {/* 底部提示 */}
-        <div className="mt-12 text-center">
-          <div className="alert-info inline-block text-left max-w-2xl">
-            <div className="alert-info-title">
-              💡 如何选择主目的地?
-            </div>
-            <div className="alert-info-content text-sm">
-              如果您计划前往多个申根国家,应向<strong>停留时间最长</strong>的国家申请签证。
-              如果各国停留时间相同,则向<strong>首先入境</strong>的国家申请。
-              <br />
-              进入系统后,我们会在&ldquo;步骤02&rdquo;详细指导如何判断主目的地。
-            </div>
-          </div>
-        </div>
+        {/* 底部间距 */}
+        <div className="mt-16"></div>
       </div>
     </div>
   );

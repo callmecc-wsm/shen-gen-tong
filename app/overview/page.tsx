@@ -4,11 +4,23 @@
  * 业务逻辑: 从云端加载用户进度,支持多设备同步
  */
 
-import { getAllSteps } from "@/lib/markdown";
+import { getAllSteps, getMarkdownContent } from "@/lib/markdown";
 import OverviewClient from "./OverviewClient";
 
 export default async function OverviewPage() {
   const steps = getAllSteps();
-  return <OverviewClient steps={steps} />;
+
+  const stepsWithChecklist = await Promise.all(
+    steps.map(async (s) => {
+      const md = await getMarkdownContent(s.file);
+      return {
+        id: s.id,
+        title: s.title,
+        items: md?.checklistItems || [],
+      };
+    })
+  );
+
+  return <OverviewClient steps={steps} stepsWithChecklist={stepsWithChecklist} />;
 }
 

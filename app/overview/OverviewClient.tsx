@@ -6,42 +6,80 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { Step } from "@/lib/markdown";
+import { getAuthToken } from "@/app/page";
+import OverviewChecklistDrawer from "@/components/OverviewChecklistDrawer";
+import Link from "next/link";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 interface OverviewClientProps {
   steps: Step[];
+  stepsWithChecklist: { id: number; title: string; items: any[] }[];
 }
 
-export default function OverviewClient({ steps }: OverviewClientProps) {
+export default function OverviewClient({ steps, stepsWithChecklist }: OverviewClientProps) {
   const router = useRouter();
-  const { isActivated, initializeFromStorage, getTotalProgress, getStepProgress } = useStore();
+  const { initializeFromStorage, getStepProgress } = useStore();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isChecklistOpen, setIsChecklistOpen] = useState(false);
 
-  // 检查激活状态
+  const DEFAULT_DESC_MAP: Record<number, string> = {
+    1: "核对户籍与常住地",
+    2: "计算停留天数",
+    3: "抢占 VFS 考位",
+    4: "下载官方核对表",
+    5: "机酒真实订单",
+    6: "流水与盖章",
+    7: "查漏补缺",
+    8: "现场录指纹",
+  };
+
   useEffect(() => {
     initializeFromStorage();
   }, [initializeFromStorage]);
 
   useEffect(() => {
-    if (!isActivated) {
-      router.push("/");
-    }
-  }, [isActivated, router]);
+    const verify = async () => {
+      const token = getAuthToken();
+      if (!token) {
+        router.push("/");
+        return;
+      }
+      try {
+        const res = await fetch("/api/verify", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          setIsLoading(false);
+        } else {
+          router.push("/");
+        }
+      } catch (e) {
+        router.push("/");
+      }
+    };
+    verify();
+  }, [router]);
 
-  // 获取总体进度
-  const totalProgress = getTotalProgress();
-  const progressPercentage = totalProgress.total > 0
-    ? Math.round((totalProgress.completed / totalProgress.total) * 100)
-    : 0;
+  // 计算每步完成百分比与总体步数进度
+  const perStep = steps.map((s) => {
+    const sp = getStepProgress(`step${s.id}`);
+    const pct = sp.total > 0 ? Math.round((sp.completed / sp.total) * 100) : 0;
+    return { id: s.id, pct, completed: sp.total > 0 && pct === 100 };
+  });
+  const completedSteps = perStep.filter((x) => x.completed).length;
+  const progressPercentage = steps.length > 0 ? Math.round((completedSteps / steps.length) * 100) : 0;
 
   // 跳转到指定步骤
   const goToStep = (stepId: number) => {
     router.push(`/step/${stepId}`);
   };
 
-  if (!isActivated) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="spinner"></div>
@@ -50,147 +88,115 @@ export default function OverviewClient({ steps }: OverviewClientProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-12 px-4">
-      <div className="max-w-5xl mx-auto">
-        {/* 页面标题 */}
-        <div className="text-center mb-8 fade-in">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            🇮🇹 意大利签证准备指南
-          </h1>
-          <p className="text-lg text-gray-600">
-            重庆领区 · 10步完整流程 · 详细指导
-          </p>
+    <ErrorBoundary>
+    <div className="min-h-screen bg-[#F5F7FA] pb-24 relative overflow-x-hidden">
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[1000px] h-[400px] bg-blue-200/20 blur-[120px] rounded-full pointer-events-none -z-10" />
+      <nav className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200/60 px-4 sm:px-6 h-14 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.push("/countries")}
+            className="p-2 -ml-2 rounded-full hover:bg-black/5 transition-colors text-slate-500 hover:text-slate-900"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <span className="text-sm font-semibold text-slate-500">申根通 · 意大利</span>
+        </div>
+        <Link href="/faq" className="text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors">帮助中心</Link>
+      </nav>
+
+      <div className="max-w-5xl mx-auto px-6 sm:px-8 pt-12">
+        <div className="mb-12">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-4xl">🇮🇹</span>
+                <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">意大利签证指南</h1>
+              </div>
+              <div className="flex items-center gap-3 text-slate-500">
+                <div className="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-xs font-bold text-slate-600 uppercase tracking-wide">重庆领区</div>
+                <span className="text-slate-300">/</span>
+                <p className="text-sm">2025 官方标准流程</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-6 bg-white/60 backdrop-blur-sm border border-white/60 p-4 rounded-2xl shadow-sm">
+              <div className="text-right">
+                <p className="text-xs font-semibold text-slate-400 uppercase mb-0.5">整体完成度</p>
+                <div className="flex items-baseline justify-end gap-1.5">
+                  <span className="text-3xl font-bold text-slate-900 leading-none">{progressPercentage}%</span>
+                  <span className="text-xs text-slate-500 font-medium">{completedSteps}/{steps.length} 步</span>
+                </div>
+              </div>
+              <div className="h-10 w-px bg-slate-200" />
+              <div className="relative w-12 h-12 flex items-center justify-center">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                  <path className="text-slate-100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="4" />
+                  <path className="text-blue-600 transition-all duration-1000 ease-out" strokeDasharray={`${progressPercentage}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+                </svg>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* 总体进度卡片 */}
-        <div className="card p-6 mb-8 fade-in">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">
-              整体进度
-            </h2>
-            <span className="text-3xl font-bold text-blue-600">
-              {progressPercentage}%
-            </span>
-          </div>
-          
-          {/* 进度条 */}
-          <div className="w-full bg-gray-200 rounded-full h-4 mb-2">
-            <div
-              className="bg-gradient-to-r from-blue-500 to-green-500 h-4 rounded-full transition-all duration-500"
-              style={{ width: `${progressPercentage}%` }}
-            ></div>
-          </div>
-          
-          <p className="text-sm text-gray-600">
-            已完成 {totalProgress.completed} / {totalProgress.total} 项任务
-          </p>
+        <div className="mb-10 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-slate-800">申请步骤</h2>
+          <button onClick={() => setIsChecklistOpen(true)} className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors">
+            打开详细清单
+            <svg width="16" height="16" viewBox="0 0 24 24" className="transition-transform"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/></svg>
+          </button>
         </div>
 
-        {/* 步骤列表 */}
-        <div className="space-y-4">
-          {steps.map((step, index) => {
-            const stepProgress = getStepProgress(`step${step.id}`);
-            const stepPercentage = stepProgress.total > 0
-              ? Math.round((stepProgress.completed / stepProgress.total) * 100)
-              : 0;
-            const isCompleted = stepProgress.total > 0 && stepPercentage === 100;
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {steps.map((step) => {
+            // 调试日志：检查步骤数据
+            console.log(`Step ${step.id}: title="${step.title}", desc="${DEFAULT_DESC_MAP[step.id] || "未找到描述"}"`);
+            
+            const sp = getStepProgress(`step${step.id}`);
+            const pct = sp.total > 0 ? Math.round((sp.completed / sp.total) * 100) : 0;
+            const isCompleted = sp.total > 0 && pct === 100;
+            const isCurrent = !isCompleted && perStep.find((x) => x.pct !== 100)?.id === step.id;
+            const desc = DEFAULT_DESC_MAP[step.id] || "";
+
+            // 为所有非完成状态的卡片添加蓝色悬浮感效果
+            const cardStyle = isCompleted
+              ? "bg-white border-slate-200/60 shadow-sm transition-all duration-300 group-hover:border-blue-500 group-hover:shadow-[0_10px_40px_-10px_rgba(37,99,235,0.2)] group-hover:ring-1 group-hover:ring-blue-500 group-hover:-translate-y-1 z-10"
+              : "bg-white border-slate-200/60 shadow-[0_2px_10px_rgb(0,0,0,0.02)] transition-all duration-300 hover:border-blue-300 hover:shadow-[0_8px_30px_rgb(37,99,235,0.1)] hover:-translate-y-1 z-10";  // 非完成卡片：默认状态与已完成一致，hover时才有蓝色效果
 
             return (
-              <div
-                key={step.id}
-                className="card p-6 cursor-pointer hover:shadow-lg transition-all duration-200 fade-in"
-                style={{ animationDelay: `${index * 0.05}s` }}
-                onClick={() => goToStep(step.id)}
-              >
-                <div className="flex items-start gap-4">
-                  {/* 步骤编号 */}
-                  <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold ${
-                    isCompleted
-                      ? "bg-green-500 text-white"
-                      : "bg-blue-100 text-blue-600"
-                  }`}>
-                    {isCompleted ? "✓" : step.id}
+              <div key={step.id} className={`group relative p-6 rounded-[20px] border transition-all duration-500 ease-out cursor-pointer flex flex-col justify-between min-h-[160px] ${cardStyle}`} onClick={() => goToStep(step.id)}>
+                <div className="flex justify-between items-start mb-4">
+                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-sm font-bold transition-colors ${isCompleted ? "bg-green-100 text-green-700 border border-green-300" : "bg-slate-50 text-slate-400 border border-slate-100"}`}>{step.id}</div>
+                  <div className={`p-2 rounded-full transition-all duration-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 translate-x-[-10px] ${isCurrent ? "group-hover:bg-blue-50 group-hover:text-blue-600" : "group-hover:bg-slate-50 group-hover:text-slate-400"}`}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/></svg>
                   </div>
-
-                  {/* 步骤信息 */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-4 mb-2">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          步骤 {step.id}: {step.title}
-                        </h3>
+                </div>
+                <div>
+                  <h3 className={`text-lg font-bold mb-1 ${isCompleted ? "text-slate-700" : "text-slate-700 group-hover:text-slate-900"}`}>{desc || step.title}</h3>
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-sm font-medium text-slate-500">{step.title}</p>
+                    {isCompleted ? (
+                      <div className="px-2.5 py-1 rounded-lg bg-green-100 border border-green-300 text-green-800">
+                        <span className="text-xs font-bold">已完成</span>
                       </div>
-                      
-                      {/* 完成状态 */}
-                      {stepProgress.total > 0 && (
-                        <div className="text-right flex-shrink-0">
-                          <div className="text-lg font-semibold text-blue-600">
-                            {stepPercentage}%
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {stepProgress.completed}/{stepProgress.total}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* 步骤进度条 */}
-                    {stepProgress.total > 0 && (
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className={`h-2 rounded-full transition-all duration-500 ${
-                            isCompleted
-                              ? "bg-green-500"
-                              : "bg-blue-500"
-                          }`}
-                          style={{ width: `${stepPercentage}%` }}
-                        ></div>
-                      </div>
+                    ) : (
+                      <div className={`px-2.5 py-1 rounded-lg border text-xs font-medium ${isCurrent ? "bg-white border-slate-200 text-slate-500 group-hover:bg-blue-50 group-hover:border-blue-100 group-hover:text-blue-600" : "bg-slate-50 border-slate-100 text-slate-400"}`}>{isCurrent ? "进行中" : "待开始"}</div>
                     )}
-                  </div>
-
-                  {/* 箭头图标 */}
-                  <div className="flex-shrink-0 text-gray-400">
-                    →
                   </div>
                 </div>
               </div>
             );
           })}
         </div>
-
-        {/* 底部操作区 */}
-        <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-          <button
-            onClick={() => goToStep(1)}
-            className="btn btn-primary"
-          >
-            开始第一步 →
-          </button>
-          <button
-            onClick={() => router.push("/countries")}
-            className="btn btn-secondary"
-          >
-            ← 返回国家选择
-          </button>
-        </div>
-
-        {/* 底部提示 */}
-        <div className="mt-8">
-          <div className="alert-info">
-            <div className="alert-info-title">
-              💡 使用提示
-            </div>
-            <div className="alert-info-content text-sm space-y-1">
-              <p>• 建议按顺序完成每个步骤,确保不遗漏关键信息</p>
-              <p>• 每个步骤都有详细的 Checklist,勾选后会自动保存进度</p>
-              <p>• 您可以随时返回任意步骤查看或修改</p>
-              <p>• 所有数据保存在本地浏览器,请勿清除浏览器数据</p>
-            </div>
-          </div>
-        </div>
       </div>
+
+      <OverviewChecklistDrawer
+        isOpen={isChecklistOpen}
+        onClose={() => setIsChecklistOpen(false)}
+        stepsWithChecklist={stepsWithChecklist}
+      />
     </div>
+    </ErrorBoundary>
   );
 }
 
