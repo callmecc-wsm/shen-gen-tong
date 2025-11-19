@@ -6,25 +6,39 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useStore } from "@/lib/store";
 import { COUNTRIES } from "@/lib/constants";
+import { getAuthToken } from "@/app/page";
 
 export default function CountriesPage() {
   const router = useRouter();
-  const { isActivated, initializeFromStorage } = useStore();
+  const [isLoading, setIsLoading] = useState(true);
 
-  // 检查激活状态
+  // 基于 Token 校验访问权限
   useEffect(() => {
-    initializeFromStorage();
-  }, [initializeFromStorage]);
-
-  useEffect(() => {
-    if (!isActivated) {
-      router.push("/");
-    }
-  }, [isActivated, router]);
+    const verify = async () => {
+      const token = getAuthToken();
+      if (!token) {
+        router.push("/");
+        return;
+      }
+      try {
+        const res = await fetch("/api/verify", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          setIsLoading(false);
+        } else {
+          router.push("/");
+        }
+      } catch (e) {
+        router.push("/");
+      }
+    };
+    verify();
+  }, [router]);
 
   // 处理国家选择
   const handleCountrySelect = (countryId: string) => {
@@ -33,7 +47,7 @@ export default function CountriesPage() {
     }
   };
 
-  if (!isActivated) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="spinner"></div>

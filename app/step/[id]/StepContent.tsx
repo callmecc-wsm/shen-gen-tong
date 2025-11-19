@@ -9,8 +9,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getAuthToken } from "@/app/page";
-import { STEPS } from "@/lib/constants";
-import { MarkdownDoc } from "@/lib/markdown";
+import { MarkdownDoc, Step } from "@/lib/markdown";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import Checklist from "@/components/Checklist";
 import ProgressBar from "@/components/ProgressBar";
@@ -20,13 +19,15 @@ import MobileMenu from "@/components/MobileMenu";
 
 interface StepContentProps {
   stepId: number;
-  stepInfo: typeof STEPS[number];
+  stepInfo: Step;
+  steps: Step[];
   markdownData: MarkdownDoc;
 }
 
 export default function StepContent({
   stepId,
   stepInfo,
+  steps,
   markdownData,
 }: StepContentProps) {
   const router = useRouter();
@@ -56,12 +57,12 @@ export default function StepContent({
   return (
     <div className="min-h-screen bg-gray-50">
       {/* 顶部进度条 */}
-      <ProgressBar currentStep={stepId} totalSteps={STEPS.length} />
+      <ProgressBar currentStep={stepId} totalSteps={steps.length} />
 
       {/* 主内容区 */}
       <div className="flex">
         {/* 侧边栏 (仅 PC 端显示) */}
-        <Sidebar currentStep={stepId} />
+        <Sidebar currentStep={stepId} steps={steps} />
 
         {/* 中心内容区 */}
         <div className="flex-1 lg:ml-72 pb-24">
@@ -72,21 +73,14 @@ export default function StepContent({
                 <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl font-bold">
                   {stepId}
                 </div>
-                <div className="flex-1">
+                  <div className="flex-1">
                   <h1 className="text-3xl font-bold text-gray-900 mb-2">
                     {stepInfo.title}
                   </h1>
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                    <span className="flex items-center gap-1">
-                      ⏱️ 预计耗时: {stepInfo.estimatedTime}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      {"⭐".repeat(stepInfo.importance)} 重要程度
-                    </span>
+                  
                   </div>
                 </div>
               </div>
-            </div>
 
             {/* Markdown 内容 */}
             <div className="card p-6 mb-6 fade-in">
@@ -119,7 +113,7 @@ export default function StepContent({
       </div>
 
       {/* 底部导航栏 */}
-      <Navigation currentStep={stepId} totalSteps={STEPS.length} />
+      <Navigation currentStep={stepId} totalSteps={steps.length} />
 
       {/* 移动端菜单 */}
       <MobileMenu currentStep={stepId} />

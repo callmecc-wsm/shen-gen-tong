@@ -79,8 +79,8 @@ export default async function StepPage({ params }: StepPageProps) {
     <StepContent
       stepId={stepId}
       stepInfo={step}
+      steps={STEPS}
       markdownData={markdownData}
-      allSteps={STEPS}
     />
   );
 }
