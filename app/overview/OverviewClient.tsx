@@ -157,10 +157,10 @@ export default function OverviewClient({ steps, stepsWithChecklist }: OverviewCl
           </div>
         </div>
 
-        <div className="mb-10 flex items-baseline justify-between">
+        <div className="mb-10 flex items-center justify-between">
           <h2 className="text-xl font-bold text-slate-800">申请步骤</h2>
-          <button onClick={() => setIsChecklistOpen(true)} className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors group">
-            准备清单
+          <button onClick={() => setIsChecklistOpen(true)} className="flex items-center gap-2 px-3.5 py-2 bg-blue-50 text-blue-700 font-medium text-sm rounded-xl border border-blue-200 hover:bg-blue-100 hover:border-blue-300 hover:text-blue-800 hover:shadow-md hover:shadow-blue-100 active:scale-[0.98] transition-all duration-200 group">
+            <span>准备清单</span>
             <svg width="16" height="16" viewBox="0 0 24 24" className="transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14m-7-7l7 7-7 7"/>
             </svg>
