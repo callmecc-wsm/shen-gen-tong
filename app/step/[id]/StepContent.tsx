@@ -8,7 +8,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getAuthToken } from "@/app/page";
+import { getAuthToken } from "@/lib/auth";
 import { MarkdownDoc, Step } from "@/lib/markdown";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import TodoSidebar from "@/components/TodoSidebar";
@@ -16,6 +16,7 @@ import ProgressBar from "@/components/ProgressBar";
 import Navigation from "@/components/Navigation";
 import Sidebar from "@/components/Sidebar";
 import MobileMenu from "@/components/MobileMenu";
+ 
 
 interface StepContentProps {
   stepId: number;
@@ -33,6 +34,7 @@ export default function StepContent({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isTodoOpen, setIsTodoOpen] = useState(false);
+ 
 
   // 检查登录状态
   useEffect(() => {
@@ -57,8 +59,6 @@ export default function StepContent({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* 顶部进度条 */}
-      <ProgressBar currentStep={stepId} totalSteps={steps.length} />
 
       {/* 主内容区 */}
       <div className="flex">
@@ -67,33 +67,41 @@ export default function StepContent({
 
         {/* 中心内容区 */}
         <div className="flex-1 lg:ml-72 pb-24">
-          <div className="max-w-4xl mx-auto px-4 py-8">
+          <ProgressBar currentStep={stepId} totalSteps={steps.length} />
+          <div className="max-w-3xl mx-auto px-4 py-8 md:px-6 md:py-10">
             {/* 步骤标题卡片 */}
-            <div className="card p-6 mb-6 fade-in">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl font-bold">
+            <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6 fade-in">
+              <div className="flex items-center gap-5">
+                <div className="flex items-center justify-center w-14 h-14 bg-blue-600 text-white text-2xl font-bold rounded-2xl shadow-blue-200 shadow-lg shrink-0">
                   {stepId}
                 </div>
-                <div className="flex-1">
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
                     {stepInfo.title}
                   </h1>
-                </div>
-                <div className="flex-shrink-0">
-                  <button
-                    onClick={() => setIsTodoOpen(true)}
-                    className="btn btn-secondary"
-                    aria-label="打开本步骤待办"
-                  >
-                    📋 本步骤待办
-                  </button>
+                  <p className="text-gray-500 text-sm mt-1">预计耗时: 5-10 分钟</p>
                 </div>
               </div>
+              {/* 暂时隐藏：本步骤待办入口，待后续优化恢复
+              <button
+                onClick={() => setIsTodoOpen(true)}
+                className="self-start md:self-center bg-orange-50 text-orange-700 px-4 py-2 rounded-lg text-sm font-medium border border-orange-100 flex items-center gap-2 shrink-0 hover:bg-orange-100 transition-colors cursor-pointer"
+                aria-label="打开本步骤待办"
+              >
+                <span className="text-lg">📋</span>
+                本步骤待办
+              </button>
+              */}
+              
             </div>
 
             {/* Markdown 内容 */}
-            <div className="card p-6 mb-6 fade-in">
-              <MarkdownRenderer content={markdownData.content} />
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6 fade-in">
+              {/* 卡片头部装饰线 */}
+              <div className="h-1 bg-gradient-to-r from-blue-500 to-blue-600 w-full"></div>
+              <div className="p-8 md:p-10">
+                <MarkdownRenderer content={markdownData.content} />
+              </div>
             </div>
 
             {/* 待办侧拉窗入口已移到标题右上角 */}

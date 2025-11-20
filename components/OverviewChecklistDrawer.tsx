@@ -1,17 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useChecklistSync } from "@/lib/useProgress";
 
 interface DrawerProps {
   isOpen: boolean;
   onClose: () => void;
   stepsWithChecklist: { id: number; title: string; items: { id: string; text: string }[] }[];
+  onSaved?: () => void;
 }
 
-export default function OverviewChecklistDrawer({ isOpen, onClose, stepsWithChecklist }: DrawerProps) {
+export default function OverviewChecklistDrawer({ isOpen, onClose, stepsWithChecklist, onSaved }: DrawerProps) {
   const { isItemChecked, toggleItem, getStepProgress } = useChecklistSync();
   const [expanded, setExpanded] = useState<number | null>(null);
+  const [stagedUpdates, setStagedUpdates] = useState<Record<string, boolean>>({});
+  const [saving, setSaving] = useState(false);
+
+  // 优化的切换函数，带乐观更新
+  const handleToggle = useCallback((stepId: string, itemId: string) => {
+    const key = `${stepId}-${itemId}`;
+    setStagedUpdates(prev => {
+      const base = isItemChecked(stepId, itemId);
+      const current = Object.prototype.hasOwnProperty.call(prev, key) ? prev[key] : base;
+      return { ...prev, [key]: !current };
+    });
+  }, [isItemChecked]);
 
   useEffect(() => {
     if (isOpen) {
@@ -22,6 +35,12 @@ export default function OverviewChecklistDrawer({ isOpen, onClose, stepsWithChec
     return () => {
       document.body.style.overflow = "unset";
     };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setStagedUpdates({});
+    }
   }, [isOpen]);
 
   useEffect(() => {
@@ -43,7 +62,6 @@ export default function OverviewChecklistDrawer({ isOpen, onClose, stepsWithChec
         className={`fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-50 transition-opacity duration-300 ${
           isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
-        onClick={onClose}
       />
 
       <div
@@ -88,19 +106,33 @@ export default function OverviewChecklistDrawer({ isOpen, onClose, stepsWithChec
                   {isOpenGroup && (
                     <div className="px-4 pb-4 pl-9 space-y-3 animate-in slide-in-from-top-2 duration-200">
                       {step.items.map((todo, idx) => {
-                        const checked = isItemChecked(`step${step.id}`, todo.id);
+                        const baseChecked = isItemChecked(`step${step.id}`, todo.id);
+                        const stagedKey = `step${step.id}-${todo.id}`;
+                        const checked = Object.prototype.hasOwnProperty.call(stagedUpdates, stagedKey)
+                          ? stagedUpdates[stagedKey]
+                          : baseChecked;
+                        
                         return (
-                          <div key={todo.id} className="flex items-start gap-3 group cursor-pointer select-none">
-                            <button
-                              className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center transition-all ${checked ? 'bg-blue-500 border-blue-500 shadow-sm shadow-blue-200' : 'border-slate-300 bg-white group-hover:border-blue-400'}`}
-                              onClick={() => toggleItem(`step${step.id}`, todo.id)}
-                              aria-label={checked ? "取消勾选" : "勾选完成"}
+                          <div 
+                            key={todo.id} 
+                            className="flex items-center gap-3 group cursor-pointer select-none"
+                            onClick={() => handleToggle(`step${step.id}`, todo.id)}
+                          >
+                            <div
+                              className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${
+                                checked 
+                                  ? 'bg-blue-500 border-blue-500 shadow-sm shadow-blue-200' 
+                                  : 'border-slate-300 bg-white group-hover:border-blue-400'
+                              }`}
+                              aria-label={checked ? "已勾选" : "未勾选"}
                             >
                               {checked && (
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-white"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"/></svg>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-white">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"/>
+                                </svg>
                               )}
-                            </button>
-                            <span className={`text-sm leading-tight transition-colors ${checked ? 'text-slate-400 line-through' : 'text-slate-700 group-hover:text-slate-900'}`}>
+                            </div>
+                            <span className={`text-sm leading-5 transition-colors select-none ${checked ? 'text-slate-400 line-through' : 'text-slate-700 group-hover:text-slate-900'}`}>
                               {todo.text}
                             </span>
                           </div>
@@ -115,7 +147,35 @@ export default function OverviewChecklistDrawer({ isOpen, onClose, stepsWithChec
           </div>
 
           <div className="p-6 border-t border-slate-100 bg-white">
-            <button onClick={onClose} className="w-full py-3.5 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 active:scale-[0.98] transition-all shadow-xl shadow-slate-200">完成并返回</button>
+            <button
+              onClick={async () => {
+                if (saving) return;
+                setSaving(true);
+                try {
+                  const entries = Object.entries(stagedUpdates);
+                  await Promise.all(entries.map(async ([key, desired]) => {
+                    const parts = key.split('-');
+                    const stepKey = parts[0];
+                    const itemId = parts.slice(1).join('-');
+                    const base = isItemChecked(stepKey, itemId);
+                    if (base !== desired) {
+                      await toggleItem(stepKey, itemId);
+                    }
+                  }));
+                  setStagedUpdates({});
+                  if (onSaved) onSaved();
+                  onClose();
+                } catch (e) {
+                  console.error('保存清单失败:', e);
+                } finally {
+                  setSaving(false);
+                }
+              }}
+              disabled={saving}
+              className={`w-full py-3.5 ${saving ? 'bg-slate-700' : 'bg-slate-900 hover:bg-slate-800'} text-white rounded-2xl font-bold active:scale-[0.98] transition-all shadow-xl shadow-slate-200`}
+            >
+              {saving ? '保存中...' : '保存并返回'}
+            </button>
           </div>
         </div>
       </div>

@@ -6,10 +6,10 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useQuery } from "@/lib/instantdb";
 import type { ChecklistData } from "@/lib/instantdb";
-import { getAuthToken } from "@/app/page";
+import { getAuthToken } from "@/lib/auth";
 
 interface ProgressData {
   currentStep: number;
@@ -75,17 +75,13 @@ export function useProgress(code?: string): UseProgressReturn {
   }, [code]);
 
   // 使用 InstantDB 实时查询（仅在有激活码时）
-  const { data, isLoading: queryLoading, error: queryError } = useQuery(
-    activationCode
-      ? {
-          userProgress: {
-            $: {
-              where: { code: activationCode },
-            },
-          },
-        }
-      : undefined
-  );
+  const { data, isLoading: queryLoading, error: queryError } = useQuery({
+    userProgress: {
+      $: {
+        where: { code: activationCode || "" },
+      },
+    },
+  });
 
   // 处理查询结果
   useEffect(() => {
@@ -208,35 +204,68 @@ export function useProgress(code?: string): UseProgressReturn {
 export function useChecklistSync() {
   const { progress, updateProgress } = useProgress();
 
+  type Patch = { stepId: string; itemId: string; value: boolean; resolve: (ok: boolean) => void; reject: (err: any) => void };
+
+  const queueRef = useRef<Patch[]>([]);
+  const flushingRef = useRef(false);
+  const draftRef = useRef<ChecklistData>({});
+  const [draftChecklist, setDraftChecklist] = useState<ChecklistData>({});
+
+  // 同步服务器进度到本地草稿
+  useEffect(() => {
+    const serverChecklist = progress?.checklist || {};
+    draftRef.current = serverChecklist;
+    setDraftChecklist(serverChecklist);
+  }, [progress]);
+
+  const flushQueue = async () => {
+    if (flushingRef.current) return;
+    flushingRef.current = true;
+
+    try {
+      while (queueRef.current.length > 0) {
+        const patchesToResolve = [...queueRef.current];
+        const snapshot: ChecklistData = JSON.parse(JSON.stringify(draftRef.current));
+        const ok = await updateProgress({ checklist: snapshot });
+        patchesToResolve.forEach(p => (ok ? p.resolve(true) : p.reject(new Error("update failed"))));
+        queueRef.current.splice(0, patchesToResolve.length);
+      }
+    } finally {
+      flushingRef.current = false;
+    }
+  };
+
   const toggleItem = async (stepId: string, itemId: string): Promise<boolean> => {
     if (!progress) return false;
 
-    const currentChecklist = progress.checklist || {};
-    const stepChecklist = currentChecklist[stepId] || {};
-    const newValue = !stepChecklist[itemId];
+    const currentStep = draftRef.current[stepId] || {};
+    const currentValue = !!currentStep[itemId];
+    const newValue = !currentValue;
 
-    const newChecklist = {
-      ...currentChecklist,
-      [stepId]: {
-        ...stepChecklist,
-        [itemId]: newValue,
-      },
-    };
+    // 更新本地草稿以驱动 UI
+    const nextStep = { ...currentStep, [itemId]: newValue };
+    const nextDraft = { ...draftRef.current, [stepId]: nextStep };
+    draftRef.current = nextDraft;
+    setDraftChecklist(nextDraft);
 
-    return await updateProgress({ checklist: newChecklist });
+    // 入队并触发串行刷新
+    return await new Promise<boolean>((resolve, reject) => {
+      queueRef.current.push({ stepId, itemId, value: newValue, resolve, reject });
+      // 异步启动队列刷新，避免阻塞点击
+      // 但返回的 Promise 会在对应批次提交完成后 resolve
+      flushQueue();
+    });
   };
 
   const isItemChecked = (stepId: string, itemId: string): boolean => {
-    if (!progress) return false;
-    return progress.checklist?.[stepId]?.[itemId] || false;
+    const step = draftChecklist[stepId] || {};
+    return !!step[itemId];
   };
 
   const getStepProgress = (stepId: string): { completed: number; total: number } => {
-    if (!progress || !progress.checklist[stepId]) {
-      return { completed: 0, total: 0 };
-    }
-
-    const items = Object.values(progress.checklist[stepId]);
+    const step = draftChecklist[stepId];
+    if (!step) return { completed: 0, total: 0 };
+    const items = Object.values(step);
     return {
       completed: items.filter(Boolean).length,
       total: items.length,
@@ -244,7 +273,7 @@ export function useChecklistSync() {
   };
 
   return {
-    checklist: progress?.checklist || {},
+    checklist: draftChecklist,
     toggleItem,
     isItemChecked,
     getStepProgress,
