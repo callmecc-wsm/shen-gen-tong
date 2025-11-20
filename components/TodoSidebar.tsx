@@ -1,13 +1,13 @@
 /**
  * Todo 侧拉窗组件
  * 用途: 从右侧滑出展示待办事项列表
- * 业务逻辑: 显示当前步骤的所有 checklist 项，支持勾选/取消勾选
+ * 业务逻辑: 显示当前步骤的所有 checklist 项，支持勾选/取消勾选，使用云端同步
  */
 
 "use client";
 
 import { useEffect } from "react";
-import { useStore } from "@/lib/store";
+import { useChecklistSync } from "@/lib/useProgress";
 import { ChecklistItem } from "@/lib/markdown";
 
 interface TodoSidebarProps {
@@ -23,19 +23,19 @@ export default function TodoSidebar({
   isOpen,
   onClose,
 }: TodoSidebarProps) {
-  const { checklist, toggleChecklistItem } = useStore();
+  const { isItemChecked, toggleItem, getStepProgress } = useChecklistSync();
 
   // 获取当前步骤的 checklist 状态
-  const stepChecklist = checklist[stepId] || {};
+  const stepProgress = getStepProgress(stepId);
 
   // 处理勾选框点击
-  const handleToggle = (itemId: string) => {
-    toggleChecklistItem(stepId, itemId);
+  const handleToggle = async (itemId: string) => {
+    await toggleItem(stepId, itemId);
   };
 
   // 计算完成进度
-  const completedCount = items.filter((item) => stepChecklist[item.id]).length;
-  const totalCount = items.length;
+  const completedCount = stepProgress.completed;
+  const totalCount = stepProgress.total;
   const percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
   // ESC 键关闭
@@ -137,7 +137,7 @@ export default function TodoSidebar({
         <div className="overflow-y-auto h-[calc(100%-200px)] px-4 py-4">
           <div className="space-y-2">
             {items.map((item, index) => {
-              const isChecked = stepChecklist[item.id] || false;
+              const isChecked = isItemChecked(stepId, item.id);
 
               return (
                 <div

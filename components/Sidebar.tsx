@@ -63,7 +63,7 @@ export default function Sidebar({ currentStep, steps }: SidebarProps) {
           onClick={() => router.push("/overview")}
           className="w-full mt-4 pt-4 border-t border-gray-200 text-blue-600 hover:text-blue-700 font-medium text-sm"
         >
-          📋 返回总览
+          返回总览
         </button>
       </div>
     </div>

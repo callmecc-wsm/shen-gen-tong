@@ -115,10 +115,10 @@ export default function HomePage() {
         <div className="text-center mb-8 fade-in">
           <div className="text-6xl mb-4">🇮🇹</div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            申根签证准备助手
+            申根通
           </h1>
           <p className="text-gray-600">
-            让签证准备变得简单、省心、高质量
+            让申根签证准备变得简单、省心、高质量
           </p>
         </div>
 
@@ -129,7 +129,7 @@ export default function HomePage() {
           </h2>
 
           <p className="text-sm text-gray-600 mb-6">
-            请输入您购买的激活码开始使用。激活码格式如：VISA-2025-XXXX
+            请输入您购买的激活码开始使用。（演示激活码：VISA-2025-NRVXXWCC，请在下方复制粘贴使用）
           </p>
 
           {/* 激活码输入表单 */}
@@ -193,31 +193,16 @@ export default function HomePage() {
             </button>
           </form>
 
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-800">
-              💡 <strong>提示：</strong>激活码一经使用，您可以在任何设备上使用同一个激活码登录，进度会自动同步。
-            </p>
-          </div>
+          
         </div>
 
         {/* 底部信息 */}
         <div className="text-center mt-6 text-sm text-gray-500">
-          <p>覆盖国家: 意大利(重庆领区)</p>
-          <p className="mt-1">适用领区: 重庆、四川、贵州、云南</p>
+          <p>目前覆盖国家：意大利(重庆领区)</p>
+          <p className="mt-1">适用地区：重庆、四川、贵州、云南</p>
         </div>
       </div>
     </div>
   );
-}
-
-// 导出 Token 管理工具函数（供其他页面使用）
-export function getAuthToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(TOKEN_KEY);
-}
-
-export function clearAuthToken(): void {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem(TOKEN_KEY);
 }
 

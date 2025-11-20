@@ -15,7 +15,7 @@ export default function ProgressBar({ currentStep, totalSteps }: ProgressBarProp
   const percentage = (currentStep / totalSteps) * 100;
 
   return (
-    <div className="bg-white border-b border-gray-200 py-4 px-4 sticky top-0 z-50 shadow-sm">
+    <div className="bg-white border-b border-gray-200 py-4 px-4 sticky top-0 z-30 shadow-sm">
       <div className="max-w-5xl mx-auto">
         {/* 步骤指示 */}
         <div className="flex items-center justify-between mb-2">

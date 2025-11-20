@@ -9,7 +9,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { COUNTRIES } from "@/lib/constants";
-import { getAuthToken } from "@/app/page";
+import { getAuthToken } from "@/lib/auth";
 
 export default function CountriesPage() {
   const router = useRouter();

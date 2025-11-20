@@ -129,7 +129,7 @@ export default function MobileMenu({ currentStep, steps }: MobileMenuProps) {
             onClick={goToOverview}
             className="w-full mt-4 pt-4 border-t border-gray-200 text-blue-600 hover:text-blue-700 font-medium"
           >
-            📋 返回总览
+            返回总览
           </button>
         </div>
       </div>

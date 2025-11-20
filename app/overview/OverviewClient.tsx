@@ -9,8 +9,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
+import { useChecklistSync } from "@/lib/useProgress";
 import { Step } from "@/lib/markdown";
-import { getAuthToken } from "@/app/page";
+import { getAuthToken } from "@/lib/auth";
 import OverviewChecklistDrawer from "@/components/OverviewChecklistDrawer";
 import Link from "next/link";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -22,19 +23,24 @@ interface OverviewClientProps {
 
 export default function OverviewClient({ steps, stepsWithChecklist }: OverviewClientProps) {
   const router = useRouter();
-  const { initializeFromStorage, getStepProgress } = useStore();
+  const { initializeFromStorage, getStepProgress: getLocalStepProgress } = useStore();
+  const { getStepProgress: getCloudStepProgress } = useChecklistSync();
   const [isLoading, setIsLoading] = useState(true);
   const [isChecklistOpen, setIsChecklistOpen] = useState(false);
+  const [savedToast, setSavedToast] = useState(false);
 
-  const DEFAULT_DESC_MAP: Record<number, string> = {
-    1: "核对户籍与常住地",
-    2: "计算停留天数",
-    3: "抢占 VFS 考位",
-    4: "下载官方核对表",
-    5: "机酒真实订单",
-    6: "流水与盖章",
-    7: "查漏补缺",
-    8: "现场录指纹",
+  // 副标题配置 - 精炼的步骤核心价值描述
+  const SUBTITLE_MAP: Record<number, string> = {
+    1: "确认领区归属，避免白跑一趟",
+    2: "选对申请国，签证更顺利",
+    3: "科学规划时间，提前锁定名额",
+    4: "官方清单下载，材料一目了然",
+    5: "机酒行程完备，提升通过率",
+    6: "财力证明充分，打消签证官疑虑",
+    7: "细节决定成败，最后把关检查",
+    8: "现场递交攻略，流程心中有数",
+    9: "费用明细清晰，预算心中有数",
+    10: "进度实时跟踪，护照顺利到手",
   };
 
   useEffect(() => {
@@ -67,9 +73,13 @@ export default function OverviewClient({ steps, stepsWithChecklist }: OverviewCl
 
   // 计算每步完成百分比与总体步数进度
   const perStep = steps.map((s) => {
-    const sp = getStepProgress(`step${s.id}`);
-    const pct = sp.total > 0 ? Math.round((sp.completed / sp.total) * 100) : 0;
-    return { id: s.id, pct, completed: sp.total > 0 && pct === 100 };
+    const cloud = getCloudStepProgress(`step${s.id}`);
+    const local = getLocalStepProgress(`step${s.id}`);
+    const markdownTotal = (stepsWithChecklist.find((x) => x.id === s.id)?.items?.length) || 0;
+    const total = markdownTotal || cloud.total || local.total || 0;
+    const completed = cloud.completed || local.completed || 0;
+    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+    return { id: s.id, pct, completed: total > 0 && pct === 100, inProgress: total > 0 && completed > 0 && pct < 100 };
   });
   const completedSteps = perStep.filter((x) => x.completed).length;
   const progressPercentage = steps.length > 0 ? Math.round((completedSteps / steps.length) * 100) : 0;
@@ -90,6 +100,14 @@ export default function OverviewClient({ steps, stepsWithChecklist }: OverviewCl
   return (
     <ErrorBoundary>
     <div className="min-h-screen bg-[#F5F7FA] pb-24 relative overflow-x-hidden">
+      <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[60] transition-all duration-300 ease-out ${savedToast ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}> 
+        <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white border border-green-300 text-green-700 shadow-lg shadow-green-100">
+          <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center border border-green-200">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-green-600"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <span className="text-sm font-medium">保存成功</span>
+        </div>
+      </div>
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[1000px] h-[400px] bg-blue-200/20 blur-[120px] rounded-full pointer-events-none -z-10" />
       <nav className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200/60 px-4 sm:px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -139,24 +157,25 @@ export default function OverviewClient({ steps, stepsWithChecklist }: OverviewCl
           </div>
         </div>
 
-        <div className="mb-10 flex items-center justify-between">
+        <div className="mb-10 flex items-baseline justify-between">
           <h2 className="text-xl font-bold text-slate-800">申请步骤</h2>
-          <button onClick={() => setIsChecklistOpen(true)} className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors">
-            打开详细清单
-            <svg width="16" height="16" viewBox="0 0 24 24" className="transition-transform"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/></svg>
+          <button onClick={() => setIsChecklistOpen(true)} className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors group">
+            准备清单
+            <svg width="16" height="16" viewBox="0 0 24 24" className="transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14m-7-7l7 7-7 7"/>
+            </svg>
           </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {steps.map((step) => {
             // 调试日志：检查步骤数据
-            console.log(`Step ${step.id}: title="${step.title}", desc="${DEFAULT_DESC_MAP[step.id] || "未找到描述"}"`);
+            console.log(`Step ${step.id}: title="${step.title}", subtitle="${SUBTITLE_MAP[step.id] || "未找到副标题"}"`);
             
-            const sp = getStepProgress(`step${step.id}`);
-            const pct = sp.total > 0 ? Math.round((sp.completed / sp.total) * 100) : 0;
-            const isCompleted = sp.total > 0 && pct === 100;
-            const isCurrent = !isCompleted && perStep.find((x) => x.pct !== 100)?.id === step.id;
-            const desc = DEFAULT_DESC_MAP[step.id] || "";
+          const ps = perStep.find((x) => x.id === step.id);
+          const isCompleted = !!ps?.completed;
+          const isInProgress = !!perStep.find((x) => x.id === step.id)?.inProgress;
+          const subtitle = SUBTITLE_MAP[step.id] || "";
 
             // 为所有非完成状态的卡片添加蓝色悬浮感效果
             const cardStyle = isCompleted
@@ -166,21 +185,21 @@ export default function OverviewClient({ steps, stepsWithChecklist }: OverviewCl
             return (
               <div key={step.id} className={`group relative p-6 rounded-[20px] border transition-all duration-500 ease-out cursor-pointer flex flex-col justify-between min-h-[160px] ${cardStyle}`} onClick={() => goToStep(step.id)}>
                 <div className="flex justify-between items-start mb-4">
-                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-sm font-bold transition-colors ${isCompleted ? "bg-green-100 text-green-700 border border-green-300" : "bg-slate-50 text-slate-400 border border-slate-100"}`}>{step.id}</div>
-                  <div className={`p-2 rounded-full transition-all duration-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 translate-x-[-10px] ${isCurrent ? "group-hover:bg-blue-50 group-hover:text-blue-600" : "group-hover:bg-slate-50 group-hover:text-slate-400"}`}>
+                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-sm font-normal transition-colors ${isCompleted ? "bg-green-100 text-green-700 border border-green-300" : (perStep.find((x) => x.id === step.id)?.inProgress ? "bg-blue-100 text-blue-700 border border-blue-300" : "bg-slate-50 text-slate-400 border border-slate-100")}`}>{step.id}</div>
+                  <div className={`p-2 rounded-full transition-all duration-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 translate-x-[-10px] ${isInProgress ? "group-hover:bg-blue-50 group-hover:text-blue-600" : "group-hover:bg-slate-50 group-hover:text-slate-400"}`}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/></svg>
                   </div>
                 </div>
                 <div>
-                  <h3 className={`text-lg font-bold mb-1 ${isCompleted ? "text-slate-700" : "text-slate-700 group-hover:text-slate-900"}`}>{desc || step.title}</h3>
+                  <h3 className={`text-lg font-bold mb-1 ${isCompleted ? "text-slate-700" : "text-slate-700 group-hover:text-slate-900"}`}>{step.title}</h3>
                   <div className="flex items-center justify-between mt-2">
-                    <p className="text-sm font-medium text-slate-500">{step.title}</p>
+                    <p className="text-sm font-medium text-slate-500">{subtitle}</p>
                     {isCompleted ? (
-                      <div className="px-2.5 py-1 rounded-lg bg-green-100 border border-green-300 text-green-800">
-                        <span className="text-xs font-bold">已完成</span>
+                      <div className="px-3 py-1.5 rounded-lg bg-green-100 border border-green-300 text-green-800 text-xs font-normal">
+                        已完成
                       </div>
                     ) : (
-                      <div className={`px-2.5 py-1 rounded-lg border text-xs font-medium ${isCurrent ? "bg-white border-slate-200 text-slate-500 group-hover:bg-blue-50 group-hover:border-blue-100 group-hover:text-blue-600" : "bg-slate-50 border-slate-100 text-slate-400"}`}>{isCurrent ? "进行中" : "待开始"}</div>
+                      <div className={`px-3 py-1.5 rounded-lg border text-xs font-normal ${isInProgress ? "bg-blue-100 border-blue-300 text-blue-800" : "bg-slate-50 border-slate-100 text-slate-400"}`}>{isInProgress ? "进行中" : "待开始"}</div>
                     )}
                   </div>
                 </div>
@@ -194,6 +213,10 @@ export default function OverviewClient({ steps, stepsWithChecklist }: OverviewCl
         isOpen={isChecklistOpen}
         onClose={() => setIsChecklistOpen(false)}
         stepsWithChecklist={stepsWithChecklist}
+        onSaved={() => {
+          setSavedToast(true);
+          setTimeout(() => setSavedToast(false), 1800);
+        }}
       />
     </div>
     </ErrorBoundary>

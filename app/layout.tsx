@@ -8,7 +8,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "申根签证准备助手 - 意大利旅游签证",
+  title: "申根通",
   description: "让签证准备变得简单、省心、高质量。专注于意大利申根签证申请的一站式引导平台。",
   keywords: "申根签证,意大利签证,旅游签证,签证申请,重庆领区",
 };

@@ -54,7 +54,7 @@ export default function Navigation({ currentStep, totalSteps }: NavigationProps)
             onClick={goToOverview}
             className="btn btn-secondary flex-1 sm:flex-initial"
           >
-            📋 返回总览
+            返回总览
           </button>
 
           {/* 下一步按钮 */}
