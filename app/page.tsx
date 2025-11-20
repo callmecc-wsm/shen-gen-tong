@@ -113,7 +113,13 @@ export default function HomePage() {
       <div className="max-w-md w-full">
         {/* Logo 和标题 */}
         <div className="text-center mb-8 fade-in">
-          <div className="text-6xl mb-4">🇪🇺</div>
+          <img
+            src="https://twemoji.maxcdn.com/v/latest/svg/1f1ea-1f1fa.svg"
+            alt="欧盟旗帜"
+            className="mx-auto mb-4"
+            width={72}
+            height={72}
+          />
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             申根通
           </h1>
